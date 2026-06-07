@@ -20,12 +20,14 @@ The repository currently contains:
 - A corpus-specific PDF cleaner at `corpora/high_speed_digital_design/cleaner.py`
 - A CLI entry point exposed by `rag_workspace.cli`
 - A smoke test script at `scripts/smoke_test.py`
-- A generated lexical retrieval index for the first corpus after ingest
+- A generated local vector index for the first corpus after ingest using Ollama `bge-m3` embeddings
+- The original lexical retrieval backend retained as a fallback
 
 Available local Ollama models observed during setup:
 
 - `qwen3:8b`
 - `qwen2.5-coder:7b`
+- `bge-m3`
 
 The intended answer-generation model is `qwen3:8b`.
 
@@ -53,6 +55,7 @@ RAG_workspace/
       pipeline.py
       retrieval.py
       storage.py
+      vector_store.py
 
   corpora/
     high_speed_digital_design/
@@ -74,6 +77,15 @@ RAG_workspace/
 
 A corpus is a single searchable knowledge collection. It may contain one or more source documents, but should have one config file and one generated index.
 
+For the first corpus, retrieval is configured with:
+
+```yaml
+retrieval_backend: vector
+embedding_provider: ollama
+embedding_model: bge-m3
+answer_model: qwen3:8b
+```
+
 For the first corpus:
 
 ```text
@@ -89,7 +101,7 @@ The PDF source and generated indexes should be treated as local data. They shoul
 
 ## Implemented RAG Flow
 
-The current first version uses a zero-vector-DB baseline:
+The current version has both a local vector backend and the original lexical backend:
 
 1. Read corpus configuration.
 2. Extract text from PDF pages with `pdfinfo` and `pdftotext`.
@@ -97,9 +109,10 @@ The current first version uses a zero-vector-DB baseline:
 4. Clean repeated headers, footers, broken whitespace, and low-value fragments.
 5. Split extracted text into page-aware chunks.
 6. Store chunks with metadata, including source document and page range.
-7. Retrieve top matching chunks with local lexical TF-IDF-style scoring.
-8. Ask `qwen3:8b` through Ollama to answer using only retrieved context.
-9. Return the answer with chunk citations and page ranges.
+7. Build an Ollama `bge-m3` embedding index under the corpus `index/` directory.
+8. Retrieve top matching chunks with the configured backend: `vector` by default or `lexical` as fallback.
+9. Ask `qwen3:8b` through Ollama to answer using only retrieved context.
+10. Return the answer with chunk citations and page ranges.
 
 ## Model Responsibilities
 
@@ -108,7 +121,7 @@ The workspace should separate embedding and answer generation:
 - Embedding model: creates vectors for search.
 - Answer model: generates final answers from retrieved context.
 
-`qwen3:8b` is the initial answer model. The first version uses lexical retrieval so the project can run without downloading extra dependencies. A dedicated embedding model should be added later for better semantic retrieval quality.
+`qwen3:8b` is the initial answer model. The current vector backend uses Ollama `bge-m3` embeddings for multilingual retrieval. A local hashed TF-IDF provider remains available for tests and fallback. The answer model remains `qwen3:8b`.
 
 ## Public Interface
 
@@ -121,8 +134,8 @@ Current CLI shape:
 
 ```bash
 PYTHONPATH=src python3 -m rag_workspace.cli ingest high_speed_digital_design
-PYTHONPATH=src python3 -m rag_workspace.cli retrieve high_speed_digital_design "What causes signal reflections?"
-PYTHONPATH=src python3 -m rag_workspace.cli ask high_speed_digital_design "What causes signal reflections?"
+PYTHONPATH=src python3 -m rag_workspace.cli retrieve high_speed_digital_design "What causes signal reflections?" --backend vector
+PYTHONPATH=src python3 -m rag_workspace.cli ask high_speed_digital_design "What causes signal reflections?" --backend vector
 ```
 
 Example target Python API shape:

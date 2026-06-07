@@ -10,6 +10,7 @@ from .ollama_client import generate
 from .pdf_extract import extract_pdf_pages
 from .retrieval import RetrievedChunk, retrieve_chunks
 from .storage import read_chunks, write_chunks
+from .vector_store import build_vector_index, search_vector_index
 
 
 def ingest(corpus_id: str) -> list[Chunk]:
@@ -37,6 +38,15 @@ def ingest(corpus_id: str) -> list[Chunk]:
 
     write_chunks(config.chunks_path, all_chunks)
     config.index_dir.mkdir(parents=True, exist_ok=True)
+    build_vector_index(
+        chunks=all_chunks,
+        index_dir=config.index_dir,
+        dimensions=config.vector_dimensions,
+        embedding_provider=config.embedding_provider,
+        embedding_model=config.embedding_model,
+        ollama_host=config.ollama_host,
+        batch_size=config.embedding_batch_size,
+    )
     metadata_path = config.index_dir / "metadata.json"
     metadata_path.write_text(
         json.dumps(
@@ -44,7 +54,11 @@ def ingest(corpus_id: str) -> list[Chunk]:
                 "corpus_id": config.corpus_id,
                 "chunk_count": len(all_chunks),
                 "source_files": [path.name for path in config.source_files],
-                "retrieval": "lexical_tfidf_v1",
+                "retrieval": "vector_embedding_v1",
+                "fallback_retrieval": "lexical_tfidf_v1",
+                "embedding_provider": config.embedding_provider,
+                "embedding_model": config.embedding_model,
+                "vector_dimensions": config.vector_dimensions,
             },
             indent=2,
         )
@@ -54,15 +68,25 @@ def ingest(corpus_id: str) -> list[Chunk]:
     return all_chunks
 
 
-def retrieve(corpus_id: str, question: str, top_k: int | None = None) -> list[RetrievedChunk]:
+def retrieve(
+    corpus_id: str,
+    question: str,
+    top_k: int | None = None,
+    backend: str | None = None,
+) -> list[RetrievedChunk]:
     config = load_corpus_config(corpus_id)
     chunks = read_chunks(config.chunks_path)
-    return retrieve_chunks(chunks, question, top_k or config.top_k)
+    selected_backend = backend or config.retrieval_backend
+    if selected_backend == "lexical":
+        return retrieve_chunks(chunks, question, top_k or config.top_k)
+    if selected_backend == "vector":
+        return search_vector_index(chunks, config.index_dir, question, top_k or config.top_k, config.ollama_host)
+    raise ValueError(f"Unsupported retrieval backend: {selected_backend}")
 
 
-def ask(corpus_id: str, question: str) -> str:
+def ask(corpus_id: str, question: str, backend: str | None = None) -> str:
     config = load_corpus_config(corpus_id)
-    retrieved = retrieve(corpus_id, question, config.top_k)
+    retrieved = retrieve(corpus_id, question, config.top_k, backend or config.retrieval_backend)
     if not retrieved:
         return "No relevant chunks were found. Try ingesting the corpus or rephrasing the question."
     prompt = build_prompt(question, retrieved)

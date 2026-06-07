@@ -17,6 +17,7 @@ Rules:
 - Answer only from the context below.
 - If the context is insufficient, say what is missing.
 - Cite sources with bracket numbers like [1] and include page ranges when useful.
+- Answer in Traditional Chinese when the question is in Chinese; otherwise answer in the question language.
 - Be concise and technical.
 
 Context:

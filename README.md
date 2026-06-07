@@ -14,11 +14,19 @@ corpora/high_speed_digital_design/source/
 - `pdftotext` and `pdfinfo`
 - Ollama running locally
 - `qwen3:8b` available in Ollama
+- `bge-m3` available in Ollama for embeddings
 
 Check local models:
 
 ```bash
 ollama list
+```
+
+Install local models:
+
+```bash
+ollama pull qwen3:8b
+ollama pull bge-m3
 ```
 
 ## First Run
@@ -38,8 +46,9 @@ PYTHONPATH=src python3 -m rag_workspace.cli retrieve high_speed_digital_design "
 Ask with Ollama:
 
 ```bash
-PYTHONPATH=src python3 -m rag_workspace.cli ask high_speed_digital_design "What causes signal reflection?"
+PYTHONPATH=src python3 -m rag_workspace.cli ask high_speed_digital_design "What causes signal reflection?" --backend vector
 ```
+
 ## Smoke Test
 
 Run retrieval-only smoke test without calling Ollama:
@@ -58,4 +67,28 @@ Call Ollama after retrieval:
 
 ```bash
 python3 scripts/smoke_test.py --ask
+python3 scripts/smoke_test.py --ask --backend lexical
 ```
+
+Short flags are also available:
+
+```bash
+python3 scripts/smoke_test.py -c high_speed_digital_design -q "What causes signal reflection?" -i
+python3 scripts/smoke_test.py -a
+```
+
+Choose a retrieval backend:
+
+```bash
+python3 scripts/smoke_test.py --backend vector
+python3 scripts/smoke_test.py --backend lexical
+```
+
+## Retrieval Backends
+
+The workspace currently supports two local retrieval backends:
+
+- `vector`: default persisted vector index stored under `corpora/*/index/`, using Ollama `bge-m3` embeddings.
+- `lexical`: original in-memory lexical scorer kept as a fallback and debug baseline.
+
+The vector backend also keeps a local `hashed_tfidf` embedding provider for tests and fallback, but the configured corpus uses `bge-m3` through Ollama.

@@ -17,10 +17,12 @@ def main(argv: list[str] | None = None) -> int:
     retrieve_parser.add_argument("corpus_id")
     retrieve_parser.add_argument("question")
     retrieve_parser.add_argument("--top-k", type=int, default=None)
+    retrieve_parser.add_argument("--backend", choices=["vector", "lexical"], default=None)
 
     ask_parser = subparsers.add_parser("ask", help="Ask a question with Ollama")
     ask_parser.add_argument("corpus_id")
     ask_parser.add_argument("question")
+    ask_parser.add_argument("--backend", choices=["vector", "lexical"], default=None)
 
     args = parser.parse_args(argv)
 
@@ -30,7 +32,7 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     if args.command == "retrieve":
-        results = retrieve(args.corpus_id, args.question, args.top_k)
+        results = retrieve(args.corpus_id, args.question, args.top_k, args.backend)
         for idx, item in enumerate(results, start=1):
             chunk = item.chunk
             print(f"[{idx}] score={item.score:.4f} {chunk.source} pages {chunk.page_start}-{chunk.page_end}")
@@ -39,7 +41,7 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     if args.command == "ask":
-        print(ask(args.corpus_id, args.question))
+        print(ask(args.corpus_id, args.question, args.backend))
         return 0
 
     parser.error(f"Unknown command: {args.command}")

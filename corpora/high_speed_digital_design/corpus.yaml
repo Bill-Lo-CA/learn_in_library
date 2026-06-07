@@ -9,3 +9,8 @@ chunk_overlap_words: 80
 answer_model: qwen3:8b
 ollama_host: http://localhost:11434
 top_k: 6
+retrieval_backend: vector
+embedding_provider: ollama
+embedding_model: bge-m3
+embedding_batch_size: 8
+vector_dimensions: 512

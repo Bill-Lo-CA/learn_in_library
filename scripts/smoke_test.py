@@ -19,11 +19,12 @@ DEFAULT_QUESTION = "What causes signal reflection?"
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Run a quick end-to-end RAG smoke test.")
-    parser.add_argument("--corpus", default="high_speed_digital_design")
-    parser.add_argument("--question", default=DEFAULT_QUESTION)
-    parser.add_argument("--ingest", action="store_true", help="Rebuild chunks before retrieval.")
-    parser.add_argument("--ask", action="store_true", help="Call Ollama after retrieval.")
+    parser.add_argument("-c", "--corpus", default="high_speed_digital_design")
+    parser.add_argument("-q", "--question", default=DEFAULT_QUESTION)
+    parser.add_argument("-i", "--ingest", action="store_true", help="Rebuild chunks before retrieval.")
+    parser.add_argument("-a", "--ask", action="store_true", help="Call Ollama after retrieval.")
     parser.add_argument("--top-k", type=int, default=3)
+    parser.add_argument("--backend", choices=["vector", "lexical"], default=None)
     args = parser.parse_args(argv)
 
     config = load_corpus_config(args.corpus)
@@ -38,7 +39,10 @@ def main(argv: list[str] | None = None) -> int:
         print("Run with --ingest first.")
         return 1
 
-    results = retrieve(config.corpus_id, args.question, args.top_k)
+    backend = args.backend or config.retrieval_backend
+    print(f"Backend: {backend}")
+
+    results = retrieve(config.corpus_id, args.question, args.top_k, backend)
     if not results:
         print("Retrieve: no matching chunks")
         return 1
@@ -54,9 +58,9 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.ask:
         print("Ask: calling Ollama")
-        print(ask(config.corpus_id, args.question))
+        print(ask(config.corpus_id, args.question, backend))
     else:
-        print("Ask: skipped (pass --ask to call Ollama)")
+        print("Ask: skipped (pass -a/--ask to call Ollama)")
 
     return 0
 

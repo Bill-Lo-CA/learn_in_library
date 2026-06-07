@@ -9,10 +9,14 @@
 ## RAG Quality
 
 - Keep chunk metadata explicit: corpus id, source filename, page number, chunk id, and text hash.
-- Test several chunk sizes before locking defaults.
+- Test several chunk sizes before locking defaults, especially 250-320 words for less diluted embeddings.
 - Add a retrieval debug command that shows the chunks selected for a question.
-- Replace lexical retrieval with embeddings once the baseline behavior is understood.
+- Compare `bge-m3` retrieval against other embedding models such as `qwen3-embedding` or `nomic-embed-text`.
+- Add Chinese-to-English technical query rewriting for English source corpora, so casual Chinese questions can map to terms like `impedance discontinuity` and `reflection coefficient`.
+- Add hybrid retrieval that combines `bge-m3` vector results with lexical results, then merges or re-scores the candidates.
+- Retrieve a larger candidate set first, such as top 10, then rerank down to the final context set.
 - Consider a reranker after the first baseline is working.
+- Track retrieval quality by ranking correctness rather than treating vector similarity scores as absolute percentages.
 
 ## Local Model Setup
 

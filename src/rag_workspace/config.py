@@ -22,6 +22,11 @@ class CorpusConfig:
     answer_model: str
     ollama_host: str
     top_k: int
+    retrieval_backend: str
+    embedding_provider: str
+    embedding_model: str
+    embedding_batch_size: int
+    vector_dimensions: int
 
     @property
     def chunks_path(self) -> Path:
@@ -53,6 +58,11 @@ def load_corpus_config(corpus_id: str) -> CorpusConfig:
         answer_model=str(raw.get("answer_model", "qwen3:8b")),
         ollama_host=str(raw.get("ollama_host", "http://localhost:11434")),
         top_k=int(raw.get("top_k", 6)),
+        retrieval_backend=str(raw.get("retrieval_backend", "vector")),
+        embedding_provider=str(raw.get("embedding_provider", "ollama")),
+        embedding_model=str(raw.get("embedding_model", "bge-m3")),
+        embedding_batch_size=int(raw.get("embedding_batch_size", 8)),
+        vector_dimensions=int(raw.get("vector_dimensions", 512)),
     )
 
 
