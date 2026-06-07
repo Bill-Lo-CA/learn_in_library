@@ -1,0 +1,11 @@
+id: example_corpus
+name: Example Corpus
+source_files:
+  - source/example.pdf
+cleaner_file: cleaner.py
+cleaner_function: clean_page
+chunk_words: 420
+chunk_overlap_words: 80
+answer_model: qwen3:8b
+ollama_host: http://localhost:11434
+top_k: 6

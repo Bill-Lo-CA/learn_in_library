@@ -1,0 +1,17 @@
+# Local source documents and generated RAG data
+corpora/*/source/*.pdf
+corpora/*/index/
+corpora/*/chunks.jsonl
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.venv/
+venv/
+
+# Local environment
+.env
+.DS_Store
