@@ -20,6 +20,7 @@ The repository currently contains:
 - A corpus-specific PDF cleaner at `corpora/high_speed_digital_design/cleaner.py`
 - A CLI entry point exposed by `rag_workspace.cli`
 - A smoke test script at `scripts/smoke_test.py`
+- A retrieval eval seed set at `corpora/high_speed_digital_design/eval.yaml`
 - Optional development dependencies exposed through `pyproject.toml` as `.[dev]`
 - A generated local vector index for the first corpus after ingest using Ollama `bge-m3` embeddings
 - The original lexical retrieval backend retained as a fallback
@@ -62,6 +63,7 @@ RAG_workspace/
   corpora/
     high_speed_digital_design/
       corpus.yaml
+      eval.yaml
       source/
       index/
       chunks.jsonl
@@ -93,6 +95,7 @@ For the first corpus:
 ```text
 corpora/high_speed_digital_design/
   corpus.yaml
+  eval.yaml
   source/
     HighSpeed_Digital_System_Design_A_Handbook_of_Interconnect_Theory_and_Design_Practices.pdf
   index/
@@ -116,6 +119,22 @@ The current version has both a local vector backend and the original lexical bac
 9. Retrieve top matching chunks with the configured backend: `vector` by default or `lexical` as fallback.
 10. Ask `qwen3:8b` through Ollama to answer using only retrieved context.
 11. Return the answer with chunk citations and page ranges.
+
+## Retrieval Evaluation
+
+Each corpus may include a `eval.yaml` file with retrieval regression cases. The current schema is:
+
+```yaml
+retrieval_eval:
+  - id: short_case_id
+    question: "Question text"
+    expected_pages:
+      - start: 10
+        end: 12
+    top_k: 5
+```
+
+The eval runner checks whether any retrieved chunk in the configured `top_k` overlaps an expected page range. This is intended to catch retrieval regressions when chunking, cleaning, embedding models, or ranking behavior changes. It does not evaluate generated answer quality.
 
 ## Model Responsibilities
 
@@ -147,6 +166,7 @@ Current CLI shape:
 PYTHONPATH=src python3 -m rag_workspace.cli ingest high_speed_digital_design
 PYTHONPATH=src python3 -m rag_workspace.cli retrieve high_speed_digital_design "What causes signal reflections?" --backend vector
 PYTHONPATH=src python3 -m rag_workspace.cli ask high_speed_digital_design "What causes signal reflections?" --backend vector
+PYTHONPATH=src python3 -m rag_workspace.cli eval high_speed_digital_design --backend lexical
 ```
 
 Example target Python API shape:

@@ -1,0 +1,21 @@
+retrieval_eval:
+  - id: edge_rate_trace_length_rule
+    question: "How does a 500 ps edge rate relate to circuit trace length?"
+    expected_pages:
+      - start: 7
+        end: 8
+    top_k: 5
+
+  - id: microstrip_and_stripline_structures
+    question: "What are microstrip and stripline transmission line structures?"
+    expected_pages:
+      - start: 10
+        end: 12
+    top_k: 5
+
+  - id: simultaneous_switching_noise_equation
+    question: "What factors appear in the simultaneous switching noise equation?"
+    expected_pages:
+      - start: 135
+        end: 135
+    top_k: 5

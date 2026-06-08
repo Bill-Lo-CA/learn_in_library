@@ -102,6 +102,20 @@ python3 scripts/smoke_test.py --backend vector
 python3 scripts/smoke_test.py --backend lexical
 ```
 
+## Retrieval Eval
+
+Run retrieval regression checks against the corpus eval set:
+
+```bash
+rag-workspace eval high_speed_digital_design --backend lexical
+```
+
+Without installing the package entry point, use:
+
+```bash
+PYTHONPATH=src python3 -m rag_workspace.cli eval high_speed_digital_design --backend lexical
+```
+
 ## Retrieval Backends
 
 The workspace currently supports two local retrieval backends:

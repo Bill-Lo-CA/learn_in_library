@@ -36,6 +36,10 @@ class CorpusConfig:
     def index_dir(self) -> Path:
         return self.root / "index"
 
+    @property
+    def eval_path(self) -> Path:
+        return self.root / "eval.yaml"
+
 
 def load_corpus_config(corpus_id: str) -> CorpusConfig:
     root = CORPORA_DIR / corpus_id
