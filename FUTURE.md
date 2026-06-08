@@ -86,6 +86,9 @@ This document tracks forward-looking ideas for `RAG_workspace`. Each item is wri
 - Split quiz generation and quiz review into separate model roles if quiz quality becomes inconsistent.
   如果題目品質不穩，將出題與審題拆成不同模型角色。
 
+- Add quiz output validation for language consistency, exactly one correct answer, citation presence, and option quality.
+  加入測驗輸出驗證，檢查語言一致性、是否只有一個正確答案、是否有引用，以及選項品質。
+
 - Add spaced repetition and a wrong-answer notebook.
   加入 spaced repetition 和錯題本。
 
@@ -113,6 +116,9 @@ This document tracks forward-looking ideas for `RAG_workspace`. Each item is wri
 
 - Add answer-quality checks for citation coverage and unsupported claims.
   加入回答品質檢查，確認引用覆蓋率和是否有未被 context 支援的說法。
+
+- Add generated-quiz quality checks for language drift, unsupported correct answers, weak distractors, and ambiguous questions.
+  加入生成測驗品質檢查，偵測語言漂移、正確答案缺乏依據、干擾選項太弱，以及題目含糊。
 
 ## Multi-Project Use / 多專案使用
 
