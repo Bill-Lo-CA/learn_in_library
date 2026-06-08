@@ -36,7 +36,7 @@ def main(argv: list[str] | None = None) -> int:
     quiz_parser.add_argument("topic")
     quiz_parser.add_argument("--count", type=int, default=5)
     quiz_parser.add_argument("--difficulty", choices=["beginner", "intermediate", "advanced"], default="intermediate")
-    quiz_parser.add_argument("--language", default="Traditional Chinese")
+    quiz_parser.add_argument("--language", default="auto")
     quiz_parser.add_argument("--backend", choices=["vector", "lexical"], default=None)
 
     args = parser.parse_args(argv)

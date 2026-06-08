@@ -128,6 +128,7 @@ The workspace can generate exam-style multiple-choice questions from retrieved c
 - Uses the configured `answer_model` as the quiz-generation model.
 - Retrieves context for a topic using the configured retrieval backend or a CLI backend override.
 - Generates a requested number of multiple-choice questions.
+- Uses `--language auto` by default: English topics produce English quizzes, and CJK topics produce Traditional Chinese quizzes.
 - Requires one correct answer, wrong-option analysis, a brief explanation, and citations to retrieved context.
 - Does not yet persist quizzes or grade user answers.
 

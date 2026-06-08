@@ -124,6 +124,8 @@ Generate exam-style multiple-choice questions from retrieved context:
 rag-workspace quiz high_speed_digital_design "signal reflection" --count 3 --difficulty intermediate
 ```
 
+By default, quiz output language is `auto`: English topics produce English questions, and Chinese topics produce Traditional Chinese questions. Use `--language "Traditional Chinese"` or `--language English` to force the output language.
+
 The first version uses the configured `answer_model` for quiz generation. It asks the model to include one correct answer, wrong-option analysis, explanations, and source citations.
 
 ## Retrieval Backends

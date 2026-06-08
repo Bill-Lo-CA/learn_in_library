@@ -1,5 +1,5 @@
 from rag_workspace.chunking import Chunk
-from rag_workspace.quiz import build_quiz_prompt
+from rag_workspace.quiz import build_quiz_prompt, resolve_quiz_language
 from rag_workspace.retrieval import RetrievedChunk
 
 
@@ -32,3 +32,15 @@ def test_build_quiz_prompt_includes_exam_constraints_and_citations():
     assert "Do not add a separate bibliography or reference section." in prompt
     assert "[1] demo.pdf, pages 10-12" in prompt
     assert "signal reflection" in prompt
+
+
+def test_resolve_quiz_language_auto_uses_english_for_english_topic():
+    assert resolve_quiz_language("signal reflection", "auto") == "English"
+
+
+def test_resolve_quiz_language_auto_uses_traditional_chinese_for_cjk_topic():
+    assert resolve_quiz_language("訊號反射", "auto") == "Traditional Chinese"
+
+
+def test_resolve_quiz_language_allows_explicit_override():
+    assert resolve_quiz_language("signal reflection", "Traditional Chinese") == "Traditional Chinese"

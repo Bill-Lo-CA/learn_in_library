@@ -11,7 +11,7 @@ def generate_quiz(
     count: int = 5,
     difficulty: str = "intermediate",
     question_type: str = "multiple-choice",
-    language: str = "Traditional Chinese",
+    language: str = "auto",
     backend: str | None = None,
 ) -> str:
     from .config import load_corpus_config
@@ -46,6 +46,7 @@ def build_quiz_prompt(
     question_type: str,
     language: str,
 ) -> str:
+    output_language = resolve_quiz_language(topic, language)
     context_blocks = []
     for idx, item in enumerate(retrieved, start=1):
         chunk = item.chunk
@@ -57,7 +58,7 @@ def build_quiz_prompt(
 
 Rules:
 - Use only the context below.
-- Write in {language}.
+- Write in {output_language}.
 - Create exactly {count} {difficulty} {question_type} questions.
 - Each question must have four options labeled A, B, C, and D.
 - Include exactly one correct answer for each question.
@@ -76,3 +77,20 @@ Topic:
 
 Quiz:
 """
+
+
+def resolve_quiz_language(topic: str, language: str) -> str:
+    if language.strip().lower() != "auto":
+        return language
+    if _contains_cjk(topic):
+        return "Traditional Chinese"
+    return "English"
+
+
+def _contains_cjk(text: str) -> bool:
+    return any(
+        "\u3400" <= char <= "\u4dbf"
+        or "\u4e00" <= char <= "\u9fff"
+        or "\uf900" <= char <= "\ufaff"
+        for char in text
+    )
