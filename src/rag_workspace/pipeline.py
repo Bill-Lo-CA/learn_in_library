@@ -6,7 +6,7 @@ from .answer import build_prompt
 from .chunking import Chunk, chunk_pages
 from .cleaning import load_cleaner
 from .config import load_corpus_config
-from .ollama_client import generate
+from .ollama_client import generate, require_model
 from .pdf_extract import extract_pdf_pages
 from .retrieval import RetrievedChunk, retrieve_chunks
 from .storage import read_chunks, write_chunks
@@ -15,6 +15,8 @@ from .vector_store import build_vector_index, search_vector_index
 
 def ingest(corpus_id: str) -> list[Chunk]:
     config = load_corpus_config(corpus_id)
+    if config.embedding_provider == "ollama":
+        require_model(config.ollama_host, config.embedding_model, "embedding")
     cleaner = load_cleaner(config.cleaner_file, config.cleaner_function)
 
     all_chunks: list[Chunk] = []
@@ -80,12 +82,15 @@ def retrieve(
     if selected_backend == "lexical":
         return retrieve_chunks(chunks, question, top_k or config.top_k)
     if selected_backend == "vector":
+        if config.embedding_provider == "ollama":
+            require_model(config.ollama_host, config.embedding_model, "embedding")
         return search_vector_index(chunks, config.index_dir, question, top_k or config.top_k, config.ollama_host)
     raise ValueError(f"Unsupported retrieval backend: {selected_backend}")
 
 
 def ask(corpus_id: str, question: str, backend: str | None = None) -> str:
     config = load_corpus_config(corpus_id)
+    require_model(config.ollama_host, config.answer_model, "answer generation")
     retrieved = retrieve(corpus_id, question, config.top_k, backend or config.retrieval_backend)
     if not retrieved:
         return "No relevant chunks were found. Try ingesting the corpus or rephrasing the question."

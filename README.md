@@ -16,6 +16,22 @@ corpora/high_speed_digital_design/source/
 - `qwen3:8b` available in Ollama
 - `bge-m3` available in Ollama for embeddings
 
+## Development Setup
+
+Create and activate a virtual environment before installing development tools:
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+python3 -m pip install -e ".[dev]"
+```
+
+Run tests:
+
+```bash
+python3 -m pytest -q
+```
+
 Check local models:
 
 ```bash
@@ -48,6 +64,8 @@ Ask with Ollama:
 ```bash
 PYTHONPATH=src python3 -m rag_workspace.cli ask high_speed_digital_design "What causes signal reflection?" --backend vector
 ```
+
+Commands that need Ollama check the configured models before running. If a required model is missing, the CLI prints an `ollama pull <model>` suggestion.
 
 ## Smoke Test
 

@@ -20,8 +20,10 @@ The repository currently contains:
 - A corpus-specific PDF cleaner at `corpora/high_speed_digital_design/cleaner.py`
 - A CLI entry point exposed by `rag_workspace.cli`
 - A smoke test script at `scripts/smoke_test.py`
+- Optional development dependencies exposed through `pyproject.toml` as `.[dev]`
 - A generated local vector index for the first corpus after ingest using Ollama `bge-m3` embeddings
 - The original lexical retrieval backend retained as a fallback
+- Ollama availability and model checks before commands that require local models
 
 Available local Ollama models observed during setup:
 
@@ -104,15 +106,16 @@ The PDF source and generated indexes should be treated as local data. They shoul
 The current version has both a local vector backend and the original lexical backend:
 
 1. Read corpus configuration.
-2. Extract text from PDF pages with `pdfinfo` and `pdftotext`.
-3. Load the corpus-specific cleaner from the corpus folder.
-4. Clean repeated headers, footers, broken whitespace, and low-value fragments.
-5. Split extracted text into page-aware chunks.
-6. Store chunks with metadata, including source document and page range.
-7. Build an Ollama `bge-m3` embedding index under the corpus `index/` directory.
-8. Retrieve top matching chunks with the configured backend: `vector` by default or `lexical` as fallback.
-9. Ask `qwen3:8b` through Ollama to answer using only retrieved context.
-10. Return the answer with chunk citations and page ranges.
+2. Check Ollama availability and required local models before Ollama-backed commands run.
+3. Extract text from PDF pages with `pdfinfo` and `pdftotext`.
+4. Load the corpus-specific cleaner from the corpus folder.
+5. Clean repeated headers, footers, broken whitespace, and low-value fragments.
+6. Split extracted text into page-aware chunks.
+7. Store chunks with metadata, including source document and page range.
+8. Build an Ollama `bge-m3` embedding index under the corpus `index/` directory.
+9. Retrieve top matching chunks with the configured backend: `vector` by default or `lexical` as fallback.
+10. Ask `qwen3:8b` through Ollama to answer using only retrieved context.
+11. Return the answer with chunk citations and page ranges.
 
 ## Model Responsibilities
 
@@ -122,6 +125,14 @@ The workspace should separate embedding and answer generation:
 - Answer model: generates final answers from retrieved context.
 
 `qwen3:8b` is the initial answer model. The current vector backend uses Ollama `bge-m3` embeddings for multilingual retrieval. A local hashed TF-IDF provider remains available for tests and fallback. The answer model remains `qwen3:8b`.
+
+Commands that require Ollama validate model availability through the local Ollama API before doing the expensive work:
+
+- `ingest` checks the configured `embedding_model` when `embedding_provider` is `ollama`.
+- `retrieve` checks the configured `embedding_model` when using the `vector` backend.
+- `ask` checks the configured `answer_model` before generating the final answer.
+
+If Ollama is not reachable or a model is missing, the CLI should print a concise error and, for missing models, suggest `ollama pull <model>`.
 
 ## Public Interface
 

@@ -26,23 +26,28 @@ def main(argv: list[str] | None = None) -> int:
 
     args = parser.parse_args(argv)
 
-    if args.command == "ingest":
-        chunks = ingest(args.corpus_id)
-        print(f"Ingested {len(chunks)} chunks for corpus {args.corpus_id}.")
-        return 0
+    try:
+        if args.command == "ingest":
+            chunks = ingest(args.corpus_id)
+            print(f"Ingested {len(chunks)} chunks for corpus {args.corpus_id}.")
+            return 0
 
-    if args.command == "retrieve":
-        results = retrieve(args.corpus_id, args.question, args.top_k, args.backend)
-        for idx, item in enumerate(results, start=1):
-            chunk = item.chunk
-            print(f"[{idx}] score={item.score:.4f} {chunk.source} pages {chunk.page_start}-{chunk.page_end}")
-            print(_preview(chunk.text))
-            print()
-        return 0
+        if args.command == "retrieve":
+            results = retrieve(args.corpus_id, args.question, args.top_k, args.backend)
+            for idx, item in enumerate(results, start=1):
+                chunk = item.chunk
+                print(f"[{idx}] score={item.score:.4f} {chunk.source} pages {chunk.page_start}-{chunk.page_end}")
+                print(_preview(chunk.text))
+                print()
+            return 0
 
-    if args.command == "ask":
-        print(ask(args.corpus_id, args.question, args.backend))
-        return 0
+        if args.command == "ask":
+            print(ask(args.corpus_id, args.question, args.backend))
+            return 0
+
+    except (FileNotFoundError, RuntimeError, ValueError) as exc:
+        print(f"Error: {exc}", file=sys.stderr)
+        return 1
 
     parser.error(f"Unknown command: {args.command}")
     return 2
