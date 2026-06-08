@@ -83,6 +83,9 @@ This document tracks forward-looking ideas for `RAG_workspace`. Each item is wri
 - Include wrong-option analysis, real-world examples, exam traps, and memory hints.
   為錯誤選項加入分析、真實例子、考試陷阱和記憶提示。
 
+- Split quiz generation and quiz review into separate model roles if quiz quality becomes inconsistent.
+  如果題目品質不穩，將出題與審題拆成不同模型角色。
+
 - Add spaced repetition and a wrong-answer notebook.
   加入 spaced repetition 和錯題本。
 

@@ -56,6 +56,7 @@ RAG_workspace/
       ollama_client.py
       pdf_extract.py
       pipeline.py
+      quiz.py
       retrieval.py
       storage.py
       vector_store.py
@@ -120,6 +121,18 @@ The current version has both a local vector backend and the original lexical bac
 10. Ask `qwen3:8b` through Ollama to answer using only retrieved context.
 11. Return the answer with chunk citations and page ranges.
 
+## Quiz Generation
+
+The workspace can generate exam-style multiple-choice questions from retrieved context. The first version:
+
+- Uses the configured `answer_model` as the quiz-generation model.
+- Retrieves context for a topic using the configured retrieval backend or a CLI backend override.
+- Generates a requested number of multiple-choice questions.
+- Requires one correct answer, wrong-option analysis, a brief explanation, and citations to retrieved context.
+- Does not yet persist quizzes or grade user answers.
+
+Future versions may split quiz generation and quiz review into separate model roles, but the current implementation keeps one model and one reviewed prompt path for simplicity.
+
 ## Retrieval Evaluation
 
 Each corpus may include a `eval.yaml` file with retrieval regression cases. The current schema is:
@@ -167,6 +180,7 @@ PYTHONPATH=src python3 -m rag_workspace.cli ingest high_speed_digital_design
 PYTHONPATH=src python3 -m rag_workspace.cli retrieve high_speed_digital_design "What causes signal reflections?" --backend vector
 PYTHONPATH=src python3 -m rag_workspace.cli ask high_speed_digital_design "What causes signal reflections?" --backend vector
 PYTHONPATH=src python3 -m rag_workspace.cli eval high_speed_digital_design --backend lexical
+PYTHONPATH=src python3 -m rag_workspace.cli quiz high_speed_digital_design "signal reflection" --count 3
 ```
 
 Example target Python API shape:

@@ -116,6 +116,16 @@ Without installing the package entry point, use:
 PYTHONPATH=src python3 -m rag_workspace.cli eval high_speed_digital_design --backend lexical
 ```
 
+## Quiz Generation
+
+Generate exam-style multiple-choice questions from retrieved context:
+
+```bash
+rag-workspace quiz high_speed_digital_design "signal reflection" --count 3 --difficulty intermediate
+```
+
+The first version uses the configured `answer_model` for quiz generation. It asks the model to include one correct answer, wrong-option analysis, explanations, and source citations.
+
 ## Retrieval Backends
 
 The workspace currently supports two local retrieval backends:

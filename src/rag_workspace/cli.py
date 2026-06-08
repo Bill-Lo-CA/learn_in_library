@@ -5,6 +5,7 @@ import sys
 
 from .pipeline import ask, ingest, retrieve
 from .evaluation import run_retrieval_eval
+from .quiz import generate_quiz
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -29,6 +30,14 @@ def main(argv: list[str] | None = None) -> int:
     eval_parser.add_argument("corpus_id")
     eval_parser.add_argument("--backend", choices=["vector", "lexical"], default=None)
     eval_parser.add_argument("--top-k", type=int, default=None)
+
+    quiz_parser = subparsers.add_parser("quiz", help="Generate exam-style questions from retrieved context")
+    quiz_parser.add_argument("corpus_id")
+    quiz_parser.add_argument("topic")
+    quiz_parser.add_argument("--count", type=int, default=5)
+    quiz_parser.add_argument("--difficulty", choices=["beginner", "intermediate", "advanced"], default="intermediate")
+    quiz_parser.add_argument("--language", default="Traditional Chinese")
+    quiz_parser.add_argument("--backend", choices=["vector", "lexical"], default=None)
 
     args = parser.parse_args(argv)
 
@@ -73,6 +82,19 @@ def main(argv: list[str] | None = None) -> int:
                         f"{_preview(chunk.text, 140)}"
                     )
             return 0 if summary.failed == 0 else 1
+
+        if args.command == "quiz":
+            print(
+                generate_quiz(
+                    corpus_id=args.corpus_id,
+                    topic=args.topic,
+                    count=args.count,
+                    difficulty=args.difficulty,
+                    language=args.language,
+                    backend=args.backend,
+                )
+            )
+            return 0
 
     except (FileNotFoundError, RuntimeError, ValueError) as exc:
         print(f"Error: {exc}", file=sys.stderr)
