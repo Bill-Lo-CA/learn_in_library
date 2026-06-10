@@ -1,5 +1,5 @@
 # Local source documents and generated RAG data
-corpora/*/source/*.pdf
+corpora/*/source/
 corpora/*/index/
 corpora/*/chunks.jsonl
 
