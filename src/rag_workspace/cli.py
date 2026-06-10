@@ -17,6 +17,11 @@ def main(argv: list[str] | None = None) -> int:
 
     ingest_parser = subparsers.add_parser("ingest", help="Build chunks for a corpus")
     ingest_parser.add_argument("corpus_id")
+    ingest_parser.add_argument(
+        "--embedding-model",
+        default=None,
+        help="Override the corpus embedding model for this index rebuild.",
+    )
 
     retrieve_parser = subparsers.add_parser("retrieve", help="Show retrieved chunks for a question")
     retrieve_parser.add_argument("corpus_id")
@@ -65,8 +70,10 @@ def main(argv: list[str] | None = None) -> int:
 
     try:
         if args.command == "ingest":
-            chunks = ingest(args.corpus_id)
+            chunks = ingest(args.corpus_id, args.embedding_model)
             print(f"Ingested {len(chunks)} chunks for corpus {args.corpus_id}.")
+            if args.embedding_model:
+                print(f"Embedding model override: {args.embedding_model}")
             return 0
 
         if args.command == "retrieve":

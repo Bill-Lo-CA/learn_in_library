@@ -25,6 +25,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("-a", "--ask", action="store_true", help="Call Ollama after retrieval.")
     parser.add_argument("--top-k", type=int, default=3)
     parser.add_argument("--backend", choices=["vector", "lexical"], default=None)
+    parser.add_argument("--embedding-model", default=None, help="Override the embedding model when rebuilding with --ingest.")
     args = parser.parse_args(argv)
 
     config = load_corpus_config(args.corpus)
@@ -32,8 +33,10 @@ def main(argv: list[str] | None = None) -> int:
     print(f"Question: {args.question}")
 
     if args.ingest:
-        chunks = ingest(config.corpus_id)
+        chunks = ingest(config.corpus_id, args.embedding_model)
         print(f"Ingest: ok ({len(chunks)} chunks)")
+        if args.embedding_model:
+            print(f"Embedding model override: {args.embedding_model}")
     elif not config.chunks_path.exists():
         print(f"Missing chunks: {config.chunks_path}")
         print("Run with --ingest first.")

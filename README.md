@@ -65,6 +65,14 @@ Build chunks:
 PYTHONPATH=src python3 -m rag_workspace.cli ingest high_speed_digital_design
 ```
 
+Rebuild the vector index with a different Ollama embedding model:
+
+```bash
+PYTHONPATH=src python3 -m rag_workspace.cli ingest high_speed_digital_design --embedding-model nomic-embed-text
+```
+
+Vector retrieval uses the embedding model recorded in the generated index metadata, so queries stay matched to the model used during the latest ingest.
+
 Preview retrieval without calling the LLM:
 
 ```bash
@@ -98,6 +106,7 @@ Rebuild chunks first:
 
 ```bash
 python3 scripts/smoke_test.py --ingest
+python3 scripts/smoke_test.py --ingest --embedding-model nomic-embed-text
 ```
 
 Call Ollama after retrieval:
@@ -163,7 +172,7 @@ The workspace currently supports two local retrieval backends:
 - `vector`: default persisted vector index stored under `corpora/*/index/`, using Ollama `bge-m3` embeddings.
 - `lexical`: original in-memory lexical scorer kept as a fallback and debug baseline.
 
-The vector backend also keeps a local `hashed_tfidf` embedding provider for tests and fallback, but the configured corpus uses `bge-m3` through Ollama.
+The vector backend also keeps a local `hashed_tfidf` embedding provider for tests and fallback, but the configured corpus uses `bge-m3` through Ollama. Use `ingest --embedding-model <model>` to rebuild the local index with another installed Ollama embedding model.
 
 ## Adding A Corpus
 

@@ -145,6 +145,8 @@ The current version has both a local vector backend and the original lexical bac
 10. Ask `qwen3:8b` through Ollama to answer using only retrieved context.
 11. Return the answer with chunk citations and page ranges.
 
+The `ingest` command accepts an `--embedding-model` override for rebuilding the vector index with a different installed Ollama embedding model. The generated vector metadata records the actual model used. Later vector retrieval checks and uses the model recorded in the index metadata so the query embedding stays aligned with the stored chunk embeddings.
+
 ## Retrieval Debugging
 
 The CLI includes a `debug-retrieve` command for inspecting retrieval behavior without changing generated data. It prints the query, backend, top-k value, score, chunk id, corpus id, source file, page range, and preview text. It can also emit JSON for later tooling.
@@ -210,6 +212,7 @@ Current CLI shape:
 
 ```bash
 PYTHONPATH=src python3 -m rag_workspace.cli ingest high_speed_digital_design
+PYTHONPATH=src python3 -m rag_workspace.cli ingest high_speed_digital_design --embedding-model nomic-embed-text
 PYTHONPATH=src python3 -m rag_workspace.cli retrieve high_speed_digital_design "What causes signal reflections?" --backend vector
 PYTHONPATH=src python3 -m rag_workspace.cli debug-retrieve high_speed_digital_design "What causes signal reflections?" --backend vector
 PYTHONPATH=src python3 -m rag_workspace.cli ask high_speed_digital_design "What causes signal reflections?" --backend vector

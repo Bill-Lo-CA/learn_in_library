@@ -10,13 +10,14 @@ from .ollama_client import generate, require_model
 from .pdf_extract import extract_pdf_pages
 from .retrieval import RetrievedChunk, retrieve_chunks
 from .storage import read_chunks, write_chunks
-from .vector_store import build_vector_index, search_vector_index
+from .vector_store import build_vector_index, read_vector_index_metadata, search_vector_index
 
 
-def ingest(corpus_id: str) -> list[Chunk]:
+def ingest(corpus_id: str, embedding_model: str | None = None) -> list[Chunk]:
     config = load_corpus_config(corpus_id)
+    selected_embedding_model = embedding_model or config.embedding_model
     if config.embedding_provider == "ollama":
-        require_model(config.ollama_host, config.embedding_model, "embedding")
+        require_model(config.ollama_host, selected_embedding_model, "embedding")
     cleaner = load_cleaner(config.cleaner_file, config.cleaner_function)
 
     all_chunks: list[Chunk] = []
@@ -45,7 +46,7 @@ def ingest(corpus_id: str) -> list[Chunk]:
         index_dir=config.index_dir,
         dimensions=config.vector_dimensions,
         embedding_provider=config.embedding_provider,
-        embedding_model=config.embedding_model,
+        embedding_model=selected_embedding_model,
         ollama_host=config.ollama_host,
         batch_size=config.embedding_batch_size,
     )
@@ -59,7 +60,7 @@ def ingest(corpus_id: str) -> list[Chunk]:
                 "retrieval": "vector_embedding_v1",
                 "fallback_retrieval": "lexical_tfidf_v1",
                 "embedding_provider": config.embedding_provider,
-                "embedding_model": config.embedding_model,
+                "embedding_model": selected_embedding_model,
                 "vector_dimensions": config.vector_dimensions,
             },
             indent=2,
@@ -83,7 +84,9 @@ def retrieve(
         return retrieve_chunks(chunks, question, top_k or config.top_k)
     if selected_backend == "vector":
         if config.embedding_provider == "ollama":
-            require_model(config.ollama_host, config.embedding_model, "embedding")
+            metadata = read_vector_index_metadata(config.index_dir)
+            indexed_model = str(metadata.get("model") or config.embedding_model)
+            require_model(config.ollama_host, indexed_model, "embedding")
         return search_vector_index(chunks, config.index_dir, question, top_k or config.top_k, config.ollama_host)
     raise ValueError(f"Unsupported retrieval backend: {selected_backend}")
 

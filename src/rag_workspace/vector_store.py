@@ -59,7 +59,7 @@ def search_vector_index(
     if not paths.metadata.exists() or not paths.records.exists():
         raise FileNotFoundError(f"Missing vector index in {index_dir}. Run ingest first.")
 
-    metadata = json.loads(paths.metadata.read_text(encoding="utf-8"))
+    metadata = read_vector_index_metadata(index_dir)
     kind = str(metadata.get("kind", ""))
     if kind == "ollama_embedding_vector_v1":
         query_vector = _normalize_dense(embed(ollama_host, str(metadata["model"]), [question])[0])
@@ -72,6 +72,16 @@ def search_vector_index(
         return _search_sparse_records(chunks, paths.records, query_vector, top_k)
 
     raise ValueError(f"Unsupported vector index kind: {kind}")
+
+
+def read_vector_index_metadata(index_dir: Path) -> dict[str, Any]:
+    paths = vector_index_paths(index_dir)
+    if not paths.metadata.exists():
+        raise FileNotFoundError(f"Missing vector index metadata in {index_dir}. Run ingest first.")
+    metadata = json.loads(paths.metadata.read_text(encoding="utf-8"))
+    if not isinstance(metadata, dict):
+        raise ValueError(f"Expected mapping in vector index metadata: {paths.metadata}")
+    return metadata
 
 
 def vector_index_paths(index_dir: Path) -> VectorIndexPaths:
