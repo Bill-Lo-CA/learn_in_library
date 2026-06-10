@@ -43,7 +43,6 @@ The workspace should separate reusable RAG code from corpus-specific files. In t
 ```text
 RAG_workspace/
   SPEC.md
-  FUTURE.md
   README.md
   pyproject.toml
 
@@ -146,6 +145,12 @@ The current version has both a local vector backend and the original lexical bac
 10. Ask `qwen3:8b` through Ollama to answer using only retrieved context.
 11. Return the answer with chunk citations and page ranges.
 
+## Retrieval Debugging
+
+The CLI includes a `debug-retrieve` command for inspecting retrieval behavior without changing generated data. It prints the query, backend, top-k value, score, chunk id, corpus id, source file, page range, and preview text. It can also emit JSON for later tooling.
+
+This command is intended to make retrieval failures inspectable before adding more complex approaches such as query rewriting, hybrid retrieval, reranking, or library-wide search.
+
 ## Quiz Generation
 
 The workspace can generate exam-style multiple-choice questions from retrieved context. The first version:
@@ -161,7 +166,7 @@ Future versions may split quiz generation and quiz review into separate model ro
 
 ## Retrieval Evaluation
 
-Each corpus may include a `eval.yaml` file with retrieval regression cases. The current schema is:
+Each corpus may include a `eval.yaml` file with retrieval regression cases. The current high-speed digital design corpus has a seed set covering edge-rate rules, transmission line structures, reflections, termination, crosstalk, losses, return current, decoupling, timing, and TDR measurement. The current schema is:
 
 ```yaml
 retrieval_eval:
@@ -174,6 +179,8 @@ retrieval_eval:
 ```
 
 The eval runner checks whether any retrieved chunk in the configured `top_k` overlaps an expected page range. This is intended to catch retrieval regressions when chunking, cleaning, embedding models, or ranking behavior changes. It does not evaluate generated answer quality.
+
+The CLI also includes `chunk-size-eval`, which temporarily chunks cleaned source pages with candidate `WORDS:OVERLAP` settings and evaluates lexical retrieval against the corpus eval cases. This command does not overwrite `chunks.jsonl` or the vector index. It is a quick screening tool before rebuilding Ollama embedding indexes for promising chunk settings.
 
 ## Model Responsibilities
 
@@ -204,8 +211,10 @@ Current CLI shape:
 ```bash
 PYTHONPATH=src python3 -m rag_workspace.cli ingest high_speed_digital_design
 PYTHONPATH=src python3 -m rag_workspace.cli retrieve high_speed_digital_design "What causes signal reflections?" --backend vector
+PYTHONPATH=src python3 -m rag_workspace.cli debug-retrieve high_speed_digital_design "What causes signal reflections?" --backend vector
 PYTHONPATH=src python3 -m rag_workspace.cli ask high_speed_digital_design "What causes signal reflections?" --backend vector
 PYTHONPATH=src python3 -m rag_workspace.cli eval high_speed_digital_design --backend lexical
+PYTHONPATH=src python3 -m rag_workspace.cli chunk-size-eval high_speed_digital_design --candidate 250:50 --candidate 320:64
 PYTHONPATH=src python3 -m rag_workspace.cli quiz high_speed_digital_design "signal reflection" --count 3
 ```
 

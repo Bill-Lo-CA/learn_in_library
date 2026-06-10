@@ -71,6 +71,13 @@ Preview retrieval without calling the LLM:
 PYTHONPATH=src python3 -m rag_workspace.cli retrieve high_speed_digital_design "What causes signal reflection?"
 ```
 
+Inspect retrieval with chunk ids and structured metadata:
+
+```bash
+PYTHONPATH=src python3 -m rag_workspace.cli debug-retrieve high_speed_digital_design "What causes signal reflection?"
+PYTHONPATH=src python3 -m rag_workspace.cli debug-retrieve high_speed_digital_design "What causes signal reflection?" --json
+```
+
 Ask with Ollama:
 
 ```bash
@@ -127,6 +134,15 @@ Without installing the package entry point, use:
 ```bash
 PYTHONPATH=src python3 -m rag_workspace.cli eval high_speed_digital_design --backend lexical
 ```
+
+Compare chunk sizes without overwriting the current generated chunks or vector index:
+
+```bash
+PYTHONPATH=src python3 -m rag_workspace.cli chunk-size-eval high_speed_digital_design
+PYTHONPATH=src python3 -m rag_workspace.cli chunk-size-eval high_speed_digital_design --candidate 250:50 --candidate 320:64
+```
+
+The chunk-size evaluator uses lexical retrieval against temporary chunks so it can quickly compare page-range hits before rebuilding Ollama vector indexes.
 
 ## Quiz Generation
 

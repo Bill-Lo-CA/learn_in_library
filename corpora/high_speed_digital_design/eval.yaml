@@ -19,3 +19,73 @@ retrieval_eval:
       - start: 135
         end: 135
     top_k: 5
+
+  - id: reflection_coefficient_at_junction
+    question: "How is the reflection coefficient defined at an impedance junction?"
+    expected_pages:
+      - start: 20
+        end: 21
+    top_k: 5
+
+  - id: source_and_load_termination_methods
+    question: "What are source termination and load termination methods?"
+    expected_pages:
+      - start: 31
+        end: 34
+    top_k: 5
+
+  - id: crosstalk_noise_shape_factors
+    question: "What affects the magnitude and shape of crosstalk noise?"
+    expected_pages:
+      - start: 44
+        end: 46
+    top_k: 5
+
+  - id: crosstalk_layout_guidelines
+    question: "What layout guidelines help limit crosstalk?"
+    expected_pages:
+      - start: 65
+        end: 67
+    top_k: 5
+
+  - id: skin_effect_conductor_loss
+    question: "How does skin effect contribute to conductor loss?"
+    expected_pages:
+      - start: 73
+        end: 74
+    top_k: 5
+
+  - id: dielectric_loss_frequency_dependence
+    question: "Why can dielectric loss vary with frequency?"
+    expected_pages:
+      - start: 80
+        end: 82
+    top_k: 5
+
+  - id: return_current_reference_plane
+    question: "Where does return current flow for a referenced transmission line?"
+    expected_pages:
+      - start: 120
+        end: 121
+    top_k: 5
+
+  - id: decoupling_capacitor_tiers
+    question: "Why can power delivery require several tiers of decoupling capacitors?"
+    expected_pages:
+      - start: 128
+        end: 133
+    top_k: 5
+
+  - id: setup_hold_timing_requirements
+    question: "Why do setup and hold time requirements matter in digital timing?"
+    expected_pages:
+      - start: 161
+        end: 165
+    top_k: 5
+
+  - id: tdr_impedance_measurement
+    question: "How does a TDR measurement determine trace impedance?"
+    expected_pages:
+      - start: 253
+        end: 255
+    top_k: 5
