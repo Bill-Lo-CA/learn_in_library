@@ -2,11 +2,15 @@
 
 Local RAG workspace for building searchable corpora from PDFs and asking questions with Ollama.
 
-The first corpus is `high_speed_digital_design`, backed by the local PDF in:
+The current implementation is a single-corpus RAG baseline that is intended to grow into a local personal library RAG system. It keeps source PDFs, generated chunks, and generated indexes out of git by default.
+
+The included corpus configuration is `high_speed_digital_design`, backed by a local PDF that should be placed in:
 
 ```text
 corpora/high_speed_digital_design/source/
 ```
+
+The PDF itself is not included in this repository.
 
 ## Requirements
 
@@ -24,6 +28,12 @@ Create and activate a virtual environment before installing development tools:
 python3 -m venv .venv
 source .venv/bin/activate
 python3 -m pip install -e ".[dev]"
+```
+
+You can also install directly from GitHub after cloning or publishing the repository:
+
+```bash
+python3 -m pip install -e "git+ssh://git@github.com/Bill-Lo-CA/learn_in_library.git#egg=rag-workspace"
 ```
 
 Run tests:
@@ -46,6 +56,8 @@ ollama pull bge-m3
 ```
 
 ## First Run
+
+Add your local source PDF at the path configured in `corpora/high_speed_digital_design/corpus.yaml`, then build chunks and the vector index.
 
 Build chunks:
 
@@ -136,3 +148,27 @@ The workspace currently supports two local retrieval backends:
 - `lexical`: original in-memory lexical scorer kept as a fallback and debug baseline.
 
 The vector backend also keeps a local `hashed_tfidf` embedding provider for tests and fallback, but the configured corpus uses `bge-m3` through Ollama.
+
+## Adding A Corpus
+
+Copy `examples/corpus.example.yaml` into a new folder under `corpora/`, then add a corpus-specific cleaner and local PDFs:
+
+```text
+corpora/
+  my_book/
+    corpus.yaml
+    cleaner.py
+    source/
+      my_book.pdf
+```
+
+Generated files such as `chunks.jsonl` and `index/` are ignored by git. Keep source PDFs out of the repository unless their license and size are explicitly acceptable.
+
+## GitHub Notes
+
+This repository is designed to publish source code, tests, examples, and documentation without publishing local book data. Before pushing a public repo, verify:
+
+```bash
+git status --short
+git ls-files
+```

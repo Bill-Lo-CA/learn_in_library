@@ -4,6 +4,8 @@
 
 `RAG_workspace` is a local, reusable RAG workspace for building searchable knowledge corpora from PDF documents and querying them with local Ollama models.
 
+The current implementation is corpus-level RAG. The next product direction is library-level RAG: multiple books should eventually behave like one searchable personal technical library while still supporting book-level filters and citations.
+
 The first corpus is based on:
 
 - `HighSpeed_Digital_System_Design_A_Handbook_of_Interconnect_Theory_and_Design_Practices.pdf`
@@ -36,7 +38,7 @@ The intended answer-generation model is `qwen3:8b`.
 
 ## Target Architecture
 
-The workspace should separate reusable RAG code from corpus-specific files.
+The workspace should separate reusable RAG code from corpus-specific files. In the current version, each corpus owns its generated chunks and vector index. Future library-level indexing can add a global index across corpora without forcing each book to become a separate software project.
 
 ```text
 RAG_workspace/
@@ -82,6 +84,8 @@ RAG_workspace/
 
 A corpus is a single searchable knowledge collection. It may contain one or more source documents, but should have one config file and one generated index.
 
+For the current code, the corpus is the main retrieval boundary. For the library direction, a book or document set should remain identifiable through metadata such as corpus id, source file, title, chapter, page range, language, and topic tags. That metadata will be needed for cross-book search, per-book filtering, and source-grounded comparisons.
+
 For the first corpus, retrieval is configured with:
 
 ```yaml
@@ -104,6 +108,27 @@ corpora/high_speed_digital_design/
 ```
 
 The PDF source and generated indexes should be treated as local data. They should not be committed to GitHub unless their license and size are explicitly acceptable.
+
+## Library Direction
+
+The intended next architecture is a personal library RAG layer above the existing corpus model:
+
+```text
+library
+  corpora/books
+    source documents
+    chunks
+    per-corpus index
+  library index
+    cross-corpus vectors
+    metadata filters
+  learning state
+    user preferences
+    concept mastery
+    quiz and review history
+```
+
+The first step should preserve the current per-corpus flow while adding enough metadata and CLI shape to search across multiple corpora later. A global library index should not be added until retrieval quality, debug output, and evaluation are good enough to catch wrong-book and wrong-chapter matches.
 
 ## Implemented RAG Flow
 
@@ -184,6 +209,14 @@ PYTHONPATH=src python3 -m rag_workspace.cli eval high_speed_digital_design --bac
 PYTHONPATH=src python3 -m rag_workspace.cli quiz high_speed_digital_design "signal reflection" --count 3
 ```
 
+Future library-level CLI shape may add commands such as:
+
+```bash
+rag-workspace library retrieve "What causes signal reflection?"
+rag-workspace library ask "Compare impedance matching across books"
+rag-workspace library ingest-all
+```
+
 Example target Python API shape:
 
 ```python
@@ -223,3 +256,4 @@ This spec should be updated whenever the code changes in a way that affects:
 - Retrieval behavior
 - Model configuration
 - GitHub publishing assumptions
+- Library-level architecture or metadata assumptions
