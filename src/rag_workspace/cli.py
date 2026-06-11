@@ -16,7 +16,7 @@ def main(argv: list[str] | None = None) -> int:
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     ingest_parser = subparsers.add_parser("ingest", help="Build chunks for a corpus")
-    ingest_parser.add_argument("corpus_id")
+    ingest_parser.add_argument("corpus", help="Corpus id, corpus directory, or corpus.yaml path")
     ingest_parser.add_argument(
         "--embedding-model",
         default=None,
@@ -24,13 +24,13 @@ def main(argv: list[str] | None = None) -> int:
     )
 
     retrieve_parser = subparsers.add_parser("retrieve", help="Show retrieved chunks for a question")
-    retrieve_parser.add_argument("corpus_id")
+    retrieve_parser.add_argument("corpus", help="Corpus id, corpus directory, or corpus.yaml path")
     retrieve_parser.add_argument("question")
     retrieve_parser.add_argument("--top-k", type=int, default=None)
     retrieve_parser.add_argument("--backend", choices=["vector", "lexical"], default=None)
 
     debug_parser = subparsers.add_parser("debug-retrieve", help="Show detailed retrieval diagnostics")
-    debug_parser.add_argument("corpus_id")
+    debug_parser.add_argument("corpus", help="Corpus id, corpus directory, or corpus.yaml path")
     debug_parser.add_argument("question")
     debug_parser.add_argument("--top-k", type=int, default=None)
     debug_parser.add_argument("--backend", choices=["vector", "lexical"], default=None)
@@ -38,17 +38,17 @@ def main(argv: list[str] | None = None) -> int:
     debug_parser.add_argument("--json", action="store_true", dest="json_output")
 
     ask_parser = subparsers.add_parser("ask", help="Ask a question with Ollama")
-    ask_parser.add_argument("corpus_id")
+    ask_parser.add_argument("corpus", help="Corpus id, corpus directory, or corpus.yaml path")
     ask_parser.add_argument("question")
     ask_parser.add_argument("--backend", choices=["vector", "lexical"], default=None)
 
     eval_parser = subparsers.add_parser("eval", help="Run retrieval evaluation cases")
-    eval_parser.add_argument("corpus_id")
+    eval_parser.add_argument("corpus", help="Corpus id, corpus directory, or corpus.yaml path")
     eval_parser.add_argument("--backend", choices=["vector", "lexical"], default=None)
     eval_parser.add_argument("--top-k", type=int, default=None)
 
     chunk_eval_parser = subparsers.add_parser("chunk-size-eval", help="Compare chunk sizes against retrieval eval cases")
-    chunk_eval_parser.add_argument("corpus_id")
+    chunk_eval_parser.add_argument("corpus", help="Corpus id, corpus directory, or corpus.yaml path")
     chunk_eval_parser.add_argument(
         "--candidate",
         action="append",
@@ -59,7 +59,7 @@ def main(argv: list[str] | None = None) -> int:
     chunk_eval_parser.add_argument("--top-k", type=int, default=None)
 
     quiz_parser = subparsers.add_parser("quiz", help="Generate exam-style questions from retrieved context")
-    quiz_parser.add_argument("corpus_id")
+    quiz_parser.add_argument("corpus", help="Corpus id, corpus directory, or corpus.yaml path")
     quiz_parser.add_argument("topic")
     quiz_parser.add_argument("--count", type=int, default=5)
     quiz_parser.add_argument("--difficulty", choices=["beginner", "intermediate", "advanced"], default="intermediate")
@@ -70,14 +70,14 @@ def main(argv: list[str] | None = None) -> int:
 
     try:
         if args.command == "ingest":
-            chunks = ingest(args.corpus_id, args.embedding_model)
-            print(f"Ingested {len(chunks)} chunks for corpus {args.corpus_id}.")
+            chunks = ingest(args.corpus, args.embedding_model)
+            print(f"Ingested {len(chunks)} chunks for corpus {args.corpus}.")
             if args.embedding_model:
                 print(f"Embedding model override: {args.embedding_model}")
             return 0
 
         if args.command == "retrieve":
-            results = retrieve(args.corpus_id, args.question, args.top_k, args.backend)
+            results = retrieve(args.corpus, args.question, args.top_k, args.backend)
             for idx, item in enumerate(results, start=1):
                 chunk = item.chunk
                 print(f"[{idx}] score={item.score:.4f} {chunk.source} pages {chunk.page_start}-{chunk.page_end}")
@@ -86,10 +86,10 @@ def main(argv: list[str] | None = None) -> int:
             return 0
 
         if args.command == "debug-retrieve":
-            config = load_corpus_config(args.corpus_id)
+            config = load_corpus_config(args.corpus)
             selected_backend = args.backend or config.retrieval_backend
             selected_top_k = args.top_k or config.top_k
-            results = retrieve(args.corpus_id, args.question, selected_top_k, selected_backend)
+            results = retrieve(args.corpus, args.question, selected_top_k, selected_backend)
             if args.json_output:
                 print(
                     json.dumps(
@@ -122,11 +122,11 @@ def main(argv: list[str] | None = None) -> int:
             return 0
 
         if args.command == "ask":
-            print(ask(args.corpus_id, args.question, args.backend))
+            print(ask(args.corpus, args.question, args.backend))
             return 0
 
         if args.command == "eval":
-            summary = run_retrieval_eval(args.corpus_id, args.backend, args.top_k)
+            summary = run_retrieval_eval(args.corpus, args.backend, args.top_k)
             print(
                 f"Retrieval eval: {summary.passed}/{summary.total} passed "
                 f"for corpus {summary.corpus_id}."
@@ -152,7 +152,7 @@ def main(argv: list[str] | None = None) -> int:
             candidates = parse_chunk_size_candidates(
                 args.candidate or ["250:50", "300:60", "320:64", "420:80"]
             )
-            summary = run_chunk_size_eval(args.corpus_id, candidates, args.top_k)
+            summary = run_chunk_size_eval(args.corpus, candidates, args.top_k)
             print(
                 f"Chunk-size eval: corpus={summary.corpus_id} "
                 f"backend={summary.backend} candidates={len(summary.results)}"
@@ -179,7 +179,7 @@ def main(argv: list[str] | None = None) -> int:
         if args.command == "quiz":
             print(
                 generate_quiz(
-                    corpus_id=args.corpus_id,
+                    corpus_id=args.corpus,
                     topic=args.topic,
                     count=args.count,
                     difficulty=args.difficulty,

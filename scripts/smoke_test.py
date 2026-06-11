@@ -33,7 +33,7 @@ def main(argv: list[str] | None = None) -> int:
     print(f"Question: {args.question}")
 
     if args.ingest:
-        chunks = ingest(config.corpus_id, args.embedding_model)
+        chunks = ingest(args.corpus, args.embedding_model)
         print(f"Ingest: ok ({len(chunks)} chunks)")
         if args.embedding_model:
             print(f"Embedding model override: {args.embedding_model}")
@@ -45,7 +45,7 @@ def main(argv: list[str] | None = None) -> int:
     backend = args.backend or config.retrieval_backend
     print(f"Backend: {backend}")
 
-    results = retrieve(config.corpus_id, args.question, args.top_k, backend)
+    results = retrieve(args.corpus, args.question, args.top_k, backend)
     if not results:
         print("Retrieve: no matching chunks")
         return 1
@@ -61,7 +61,7 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.ask:
         print("Ask: calling Ollama")
-        print(ask(config.corpus_id, args.question, backend))
+        print(ask(args.corpus, args.question, backend))
     else:
         print("Ask: skipped (pass -a/--ask to call Ollama)")
 

@@ -1,16 +1,10 @@
 # RAG Workspace
 
-Local RAG workspace for building searchable corpora from PDFs and asking questions with Ollama.
+Local RAG framework for building searchable corpora from local documents and asking questions with Ollama.
 
-The current implementation is a single-corpus RAG baseline that is intended to grow into a local personal library RAG system. It keeps source PDFs, generated chunks, and generated indexes out of git by default.
+The repository is intended to stay mostly code, tests, documentation, and examples. Real source documents, generated chunks, and vector indexes should live in data projects that use this framework.
 
-The included corpus configuration is `high_speed_digital_design`, backed by a local PDF that should be placed in:
-
-```text
-corpora/high_speed_digital_design/source/
-```
-
-The PDF itself is not included in this repository.
+The previous `high_speed_digital_design` corpus has been moved out to `/home/amd2/projects/high_speed_digital_design_rag/` as a local data corpus project.
 
 ## Requirements
 
@@ -57,42 +51,30 @@ ollama pull bge-m3
 
 ## First Run
 
-Add your local source PDF at the path configured in `corpora/high_speed_digital_design/corpus.yaml`, then build chunks and the vector index.
+Copy `examples/corpus.example.yaml` into a data project, add source documents there, then build chunks and the vector index in that data project. The CLI accepts a corpus id, a corpus directory path, or a direct `corpus.yaml` path.
 
-Build chunks:
-
-```bash
-PYTHONPATH=src python3 -m rag_workspace.cli ingest high_speed_digital_design
-```
-
-Rebuild the vector index with a different Ollama embedding model:
+Example commands using a direct external config path:
 
 ```bash
-PYTHONPATH=src python3 -m rag_workspace.cli ingest high_speed_digital_design --embedding-model nomic-embed-text
+PYTHONPATH=src python3 -m rag_workspace.cli ingest /home/amd2/projects/high_speed_digital_design_rag/corpus.yaml
+PYTHONPATH=src python3 -m rag_workspace.cli retrieve /home/amd2/projects/high_speed_digital_design_rag/corpus.yaml "What causes signal reflection?"
+PYTHONPATH=src python3 -m rag_workspace.cli debug-retrieve /home/amd2/projects/high_speed_digital_design_rag/corpus.yaml "What causes signal reflection?" --json
+PYTHONPATH=src python3 -m rag_workspace.cli ask /home/amd2/projects/high_speed_digital_design_rag/corpus.yaml "What causes signal reflection?" --backend vector
 ```
 
-Vector retrieval uses the embedding model recorded in the generated index metadata, so queries stay matched to the model used during the latest ingest.
-
-Preview retrieval without calling the LLM:
+You can also point the framework at external corpus projects and use a corpus id:
 
 ```bash
-PYTHONPATH=src python3 -m rag_workspace.cli retrieve high_speed_digital_design "What causes signal reflection?"
+export RAG_WORKSPACE_CORPORA_DIR=/home/amd2/projects
+PYTHONPATH=src python3 -m rag_workspace.cli ingest my_book
+PYTHONPATH=src python3 -m rag_workspace.cli retrieve my_book "What causes signal reflection?"
+PYTHONPATH=src python3 -m rag_workspace.cli debug-retrieve my_book "What causes signal reflection?" --json
+PYTHONPATH=src python3 -m rag_workspace.cli ask my_book "What causes signal reflection?" --backend vector
 ```
 
-Inspect retrieval with chunk ids and structured metadata:
+When using `RAG_WORKSPACE_CORPORA_DIR`, the CLI first checks `<dir>/<corpus>/corpus.yaml`. It can also find a one-level child project whose `corpus.yaml` has a matching `id`, such as resolving `high_speed_digital_design` to `/home/amd2/projects/high_speed_digital_design_rag/corpus.yaml`.
 
-```bash
-PYTHONPATH=src python3 -m rag_workspace.cli debug-retrieve high_speed_digital_design "What causes signal reflection?"
-PYTHONPATH=src python3 -m rag_workspace.cli debug-retrieve high_speed_digital_design "What causes signal reflection?" --json
-```
-
-Ask with Ollama:
-
-```bash
-PYTHONPATH=src python3 -m rag_workspace.cli ask high_speed_digital_design "What causes signal reflection?" --backend vector
-```
-
-Commands that need Ollama check the configured models before running. If a required model is missing, the CLI prints an `ollama pull <model>` suggestion.
+Vector retrieval uses the embedding model recorded in the generated index metadata, so queries stay matched to the model used during the latest ingest. Commands that need Ollama check the configured models before running. If a required model is missing, the CLI prints an `ollama pull <model>` suggestion.
 
 ## Smoke Test
 
@@ -119,7 +101,7 @@ python3 scripts/smoke_test.py --ask --backend lexical
 Short flags are also available:
 
 ```bash
-python3 scripts/smoke_test.py -c high_speed_digital_design -q "What causes signal reflection?" -i
+python3 scripts/smoke_test.py -c my_book -q "What causes signal reflection?" -i
 python3 scripts/smoke_test.py -a
 ```
 
@@ -135,20 +117,20 @@ python3 scripts/smoke_test.py --backend lexical
 Run retrieval regression checks against the corpus eval set:
 
 ```bash
-rag-workspace eval high_speed_digital_design --backend lexical
+rag-workspace eval my_book --backend lexical
 ```
 
 Without installing the package entry point, use:
 
 ```bash
-PYTHONPATH=src python3 -m rag_workspace.cli eval high_speed_digital_design --backend lexical
+PYTHONPATH=src python3 -m rag_workspace.cli eval my_book --backend lexical
 ```
 
 Compare chunk sizes without overwriting the current generated chunks or vector index:
 
 ```bash
-PYTHONPATH=src python3 -m rag_workspace.cli chunk-size-eval high_speed_digital_design
-PYTHONPATH=src python3 -m rag_workspace.cli chunk-size-eval high_speed_digital_design --candidate 250:50 --candidate 320:64
+PYTHONPATH=src python3 -m rag_workspace.cli chunk-size-eval my_book
+PYTHONPATH=src python3 -m rag_workspace.cli chunk-size-eval my_book --candidate 250:50 --candidate 320:64
 ```
 
 The chunk-size evaluator uses lexical retrieval against temporary chunks so it can quickly compare page-range hits before rebuilding Ollama vector indexes.
@@ -158,7 +140,7 @@ The chunk-size evaluator uses lexical retrieval against temporary chunks so it c
 Generate exam-style multiple-choice questions from retrieved context:
 
 ```bash
-rag-workspace quiz high_speed_digital_design "signal reflection" --count 3 --difficulty intermediate
+rag-workspace quiz my_book "signal reflection" --count 3 --difficulty intermediate
 ```
 
 By default, quiz output language is `auto`: English topics produce English questions, and Chinese topics produce Traditional Chinese questions. Use `--language "Traditional Chinese"` or `--language English` to force the output language.
@@ -169,25 +151,24 @@ The first version uses the configured `answer_model` for quiz generation. It ask
 
 The workspace currently supports two local retrieval backends:
 
-- `vector`: default persisted vector index stored under `corpora/*/index/`, using Ollama `bge-m3` embeddings.
+- `vector`: default persisted vector index stored under the selected data project's `index/` directory, using Ollama `bge-m3` embeddings.
 - `lexical`: original in-memory lexical scorer kept as a fallback and debug baseline.
 
-The vector backend also keeps a local `hashed_tfidf` embedding provider for tests and fallback, but the configured corpus uses `bge-m3` through Ollama. Use `ingest --embedding-model <model>` to rebuild the local index with another installed Ollama embedding model.
+The vector backend also keeps a local `hashed_tfidf` embedding provider for tests and fallback. Use `ingest --embedding-model <model>` to rebuild the local index with another installed Ollama embedding model.
 
 ## Adding A Corpus
 
-Copy `examples/corpus.example.yaml` into a new folder under `corpora/`, then add a corpus-specific cleaner and local PDFs:
+Copy `examples/corpus.example.yaml` into a data project outside this framework repository, then add a corpus-specific cleaner and local PDFs:
 
 ```text
-corpora/
-  my_book/
-    corpus.yaml
-    cleaner.py
-    source/
-      my_book.pdf
+my_book_rag/
+  corpus.yaml
+  cleaner.py
+  source/
+    my_book.pdf
 ```
 
-Generated files such as `chunks.jsonl` and `index/` are ignored by git. Keep source PDFs out of the repository unless their license and size are explicitly acceptable.
+Generated files such as `chunks.jsonl` and `index/` should stay in the data project, not in `RAG_workspace`. Keep source PDFs out of the framework repository unless their license and size are explicitly acceptable.
 
 ## GitHub Notes
 

@@ -4,13 +4,9 @@
 
 `RAG_workspace` is a local, reusable RAG workspace for building searchable knowledge corpora from PDF documents and querying them with local Ollama models.
 
-The current implementation is corpus-level RAG. The next product direction is library-level RAG: multiple books should eventually behave like one searchable personal technical library while still supporting book-level filters and citations.
+The current implementation is corpus-level RAG. The next product direction is framework-style RAG: data projects should own their source documents, generated chunks, indexes, and eval cases while this repository provides reusable ingestion, retrieval, answer, quiz, and evaluation code.
 
-The first corpus is based on:
-
-- `HighSpeed_Digital_System_Design_A_Handbook_of_Interconnect_Theory_and_Design_Practices.pdf`
-
-The workspace should stay general enough to support additional corpora later without turning each corpus into a separate software project.
+The previous high-speed digital design corpus has been moved out of this repository to `/home/amd2/projects/high_speed_digital_design_rag/`. It is intentionally a local data corpus project and is not managed by git for now.
 
 ## Current State
 
@@ -18,13 +14,11 @@ The repository currently contains:
 
 - A git repository initialized in `RAG_workspace`
 - A Python package under `src/rag_workspace`
-- One configured corpus under `corpora/high_speed_digital_design`
-- A corpus-specific PDF cleaner at `corpora/high_speed_digital_design/cleaner.py`
+- No committed real corpus under `corpora/`; real corpus data should live in separate data projects
 - A CLI entry point exposed by `rag_workspace.cli`
+- External corpus config resolution by direct `corpus.yaml` path, corpus directory path, corpus id under `RAG_WORKSPACE_CORPORA_DIR`, or legacy id under `RAG_workspace/corpora/`
 - A smoke test script at `scripts/smoke_test.py`
-- A retrieval eval seed set at `corpora/high_speed_digital_design/eval.yaml`
 - Optional development dependencies exposed through `pyproject.toml` as `.[dev]`
-- A generated local vector index for the first corpus after ingest using Ollama `bge-m3` embeddings
 - The original lexical retrieval backend retained as a fallback
 - Ollama availability and model checks before commands that require local models
 
@@ -62,14 +56,6 @@ RAG_workspace/
       storage.py
       vector_store.py
 
-  corpora/
-    high_speed_digital_design/
-      corpus.yaml
-      eval.yaml
-      source/
-      index/
-      chunks.jsonl
-
   examples/
     corpus.example.yaml
 
@@ -85,7 +71,7 @@ A corpus is a single searchable knowledge collection. It may contain one or more
 
 For the current code, the corpus is the main retrieval boundary. For the library direction, a book or document set should remain identifiable through metadata such as corpus id, source file, title, chapter, page range, language, and topic tags. That metadata will be needed for cross-book search, per-book filtering, and source-grounded comparisons.
 
-For the first corpus, retrieval is configured with:
+A corpus config can choose retrieval, embedding, and answer models, for example:
 
 ```yaml
 retrieval_backend: vector
@@ -94,19 +80,16 @@ embedding_model: bge-m3
 answer_model: qwen3:8b
 ```
 
-For the first corpus:
+Real corpus source files and generated indexes should be treated as local data. They should live in data projects outside this framework repository unless they are small fixtures or examples with explicit license approval.
 
-```text
-corpora/high_speed_digital_design/
-  corpus.yaml
-  eval.yaml
-  source/
-    HighSpeed_Digital_System_Design_A_Handbook_of_Interconnect_Theory_and_Design_Practices.pdf
-  index/
-  chunks.jsonl
-```
+Corpus config resolution accepts:
 
-The PDF source and generated indexes should be treated as local data. They should not be committed to GitHub unless their license and size are explicitly acceptable.
+- Direct config path: `/path/to/data_project/corpus.yaml`
+- Corpus directory path: `/path/to/data_project`
+- External corpus id found under `RAG_WORKSPACE_CORPORA_DIR`
+- Legacy in-repository corpus id found under `RAG_workspace/corpora/`
+
+`RAG_WORKSPACE_CORPORA_DIR` uses the platform path separator, so multiple external roots can be configured. For each root, the resolver first checks `<root>/<corpus>/corpus.yaml`, then scans one-level child directories for a `corpus.yaml` whose `id` matches the requested corpus id. This lets a project folder such as `high_speed_digital_design_rag` expose the corpus id `high_speed_digital_design`.
 
 ## Library Direction
 
@@ -168,7 +151,7 @@ Future versions may split quiz generation and quiz review into separate model ro
 
 ## Retrieval Evaluation
 
-Each corpus may include a `eval.yaml` file with retrieval regression cases. The current high-speed digital design corpus has a seed set covering edge-rate rules, transmission line structures, reflections, termination, crosstalk, losses, return current, decoupling, timing, and TDR measurement. The current schema is:
+Each corpus may include a `eval.yaml` file with retrieval regression cases. The current schema is:
 
 ```yaml
 retrieval_eval:
@@ -211,15 +194,17 @@ The workspace should eventually expose two stable interfaces:
 Current CLI shape:
 
 ```bash
-PYTHONPATH=src python3 -m rag_workspace.cli ingest high_speed_digital_design
-PYTHONPATH=src python3 -m rag_workspace.cli ingest high_speed_digital_design --embedding-model nomic-embed-text
-PYTHONPATH=src python3 -m rag_workspace.cli retrieve high_speed_digital_design "What causes signal reflections?" --backend vector
-PYTHONPATH=src python3 -m rag_workspace.cli debug-retrieve high_speed_digital_design "What causes signal reflections?" --backend vector
-PYTHONPATH=src python3 -m rag_workspace.cli ask high_speed_digital_design "What causes signal reflections?" --backend vector
-PYTHONPATH=src python3 -m rag_workspace.cli eval high_speed_digital_design --backend lexical
-PYTHONPATH=src python3 -m rag_workspace.cli chunk-size-eval high_speed_digital_design --candidate 250:50 --candidate 320:64
-PYTHONPATH=src python3 -m rag_workspace.cli quiz high_speed_digital_design "signal reflection" --count 3
+PYTHONPATH=src python3 -m rag_workspace.cli ingest CORPUS
+PYTHONPATH=src python3 -m rag_workspace.cli ingest CORPUS --embedding-model nomic-embed-text
+PYTHONPATH=src python3 -m rag_workspace.cli retrieve CORPUS "What causes signal reflections?" --backend vector
+PYTHONPATH=src python3 -m rag_workspace.cli debug-retrieve CORPUS "What causes signal reflections?" --backend vector
+PYTHONPATH=src python3 -m rag_workspace.cli ask CORPUS "What causes signal reflections?" --backend vector
+PYTHONPATH=src python3 -m rag_workspace.cli eval CORPUS --backend lexical
+PYTHONPATH=src python3 -m rag_workspace.cli chunk-size-eval CORPUS --candidate 250:50 --candidate 320:64
+PYTHONPATH=src python3 -m rag_workspace.cli quiz CORPUS "signal reflection" --count 3
 ```
+
+`CORPUS` may be a corpus id, a data project directory, or a direct `corpus.yaml` path.
 
 Future library-level CLI shape may add commands such as:
 
@@ -234,7 +219,7 @@ Example target Python API shape:
 ```python
 from rag_workspace import ask
 
-answer = ask("high_speed_digital_design", "What causes signal reflections?")
+answer = ask("my_book", "What causes signal reflections?")
 ```
 
 ## GitHub Rules
